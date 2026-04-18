@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8"/>
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+ <title>ClassSense AI — Teacher Dashboard</title>
+ <meta name="description" content="AI-powered teacher dashboard that reads the room in real-time for online classes."/>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+
+ <style>
+ * { box-sizing: border-box; }
+ body { font-family: 'Inter', sans-serif; background: #0b0f1a; overflow-x: hidden; }
+ .mono { font-family: 'JetBrains Mono', monospace; }
+
+ /* ── Global scrollbar ── */
+ ::-webkit-scrollbar { width: 5px; }
+ ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 9999px; }
+
+ /* ── Glass cards ── */
+ .glass {
+ background: rgba(255,255,255,0.04);
+ backdrop-filter: blur(24px);
+ border: 1px solid rgba(255,255,255,0.07);
+ }
+ .glass-hover { transition: all 0.3s ease; }
+ .glass-hover:hover {
+ background: rgba(255,255,255,0.065);
+ border-color: rgba(99,102,241,0.3);
+ transform: translateY(-3px);
+ box-shadow: 0 20px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(99,102,241,0.1);
+ }
+
+ /* ── Ambient glow blobs ── */
+ .blob {
+ position: fixed; border-radius: 50%;
+ filter: blur(120px); opacity: 0.07;
+ pointer-events: none; z-index: 0;
+ }
+
+ /* ── Live dot ── */
+ .live-dot {
+ width: 8px; height: 8px; border-radius: 50%;
+ background: #22c55e;
+ animation: livepulse 1.4s ease-in-out infinite;
+ display: inline-block;
+ }
+ @keyframes livepulse {
+ 0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+ 50% { opacity:0.7; box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+ }
+
+ /* ── Attention dot ── */
+ .attn-dot { width:10px;height:10px;border-radius:50%;display:inline-block;transition:background 0.5s; }
+
+ /* ── Emotion chip ── */
+ .emotion-chip {
+ display: inline-flex; align-items: center; gap: 5px;
+ padding: 2px 10px; border-radius: 999px;
+ font-size: 11px; font-weight: 600;
+ transition: all 0.5s ease;
+ }
+
+ /* ── Engagement ring ── */
+ .ring-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+ .ring-wrap canvas { position: absolute; inset: 0; }
+ .ring-val {
+ position: absolute; inset:0;
+ display: flex; flex-direction: column;
+ align-items: center; justify-content: center;
+ font-size: 18px; font-weight: 800; line-height:1;
+ }
+
+ /* ── Wave bars (audio viz) ── */
+ .wave-bar {
+ width: 3px; border-radius: 999px;
+ background: rgba(99,102,241,0.6);
+ animation: wave linear infinite;
+ }
+ @keyframes wave {
+ 0%,100% { transform: scaleY(0.3); }
+ 50% { transform: scaleY(1); }
+ }
+
+ /* ── AI pulse ── */
+ .ai-pulse {
+ animation: aipulse 2.5s ease-in-out infinite;
+ }
+ @keyframes aipulse {
+ 0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.3); }
+ 50% { box-shadow: 0 0 0 10px rgba(99,102,241,0); }
+ }
+
+ /* ── Gradient text ── */
+ .grad-indigo { background:linear-gradient(135deg,#818cf8,#c084fc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+ .grad-green { background:linear-gradient(135deg,#34d399,#22c55e); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+ .grad-amber { background:linear-gradient(135deg,#fbbf24,#f97316); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+ .grad-red { background:linear-gradient(135deg,#f87171,#e11d48); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+ /* ── Progress bar ── */
+ .pbar { height:5px; border-radius:999px; background:rgba(255,255,255,0.06); overflow:hidden; }
+ .pfill { height:100%; border-radius:999px; transition: width 1s ease, background 0.5s ease; }
+
+ /* ── AI insight feed ── */
+ .insight-item {
+ display: flex; align-items: flex-start; gap: 10px;
+ padding: 10px 12px; border-radius: 12px;
+ animation: slideIn 0.4s ease;
+ }
+ @keyframes slideIn {
+ from { opacity:0; transform: translateX(-10px); }
+ to { opacity:1; transform: none; }
+ }
+
+ /* ── Timer colon blink ── */
+ .colon-blink { animation: colblink 1s step-end infinite; }
+ @keyframes colblink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+ /* ── Session header glow ── */
+ .header-glow {
+ background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08), rgba(16,185,129,0.06));
+ border-bottom: 1px solid rgba(255,255,255,0.06);
+ }
+
+ /* ── Tooltip-style tag ── */
+ .tag { font-size:10px; padding:2px 7px; border-radius:5px; font-weight:600; letter-spacing:0.03em; }
+
+ /* ── Student cam area ── */
+ .cam-area {
+ height: 90px;
+ border-radius: 10px;
+ position: relative;
+ overflow: hidden;
+ background: #0d1120;
+ border: 1px solid rgba(255,255,255,0.07);
+ }
+
+ /* ── Fade in on load ── */
+ .fade-up { opacity:0; transform:translateY(20px); animation: fadeUp 0.6s ease forwards; }
+ @keyframes fadeUp { to { opacity:1; transform:none; } }
+ </style>
+</head>
+<body class="text-gray-100 min-h-screen">
+
+ <!-- Ambient blobs -->
+ <div class="blob w-96 h-96 bg-indigo-500" style="top:-80px;left:-100px;"></div>
+ <div class="blob w-80 h-80 bg-purple-500" style="bottom:100px;right:-80px;"></div>
+ <div class="blob w-64 h-64 bg-emerald-500" style="top:40%;left:40%;opacity:0.04;"></div>
+
+ <!-- ════════════════════ HEADER ════════════════════ -->
+ <header class="header-glow sticky top-0 z-50 px-6 py-3">
+ <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+
+ <!-- Brand -->
+ <div class="flex items-center gap-3">
+ <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg ai-pulse">
+ <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+ d="M9.663 17h4.674M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+ </svg>
+ </div>
+ <div>
+ <h1 class="font-black text-base text-white leading-none">ClassSense <span class="text-indigo-400">AI</span></h1>
+ <p class="text-gray-500 text-xs">Teacher Dashboard</p>
+ </div>
+ </div>
+
+ <!-- Session info -->
+ <div class="flex items-center gap-4 flex-wrap">
+ <div class="glass rounded-xl px-4 py-2 flex items-center gap-3">
+ <div>
+ <p class="text-xs text-gray-500 leading-none mb-0.5">Session</p>
+ <p class="text-sm font-bold text-white">Mathematics · Grade 10</p>
+ </div>
+ </div>
+
+ <!-- Live timer -->
+ <div class="glass rounded-xl px-4 py-2 flex items-center gap-2">
+ <span class="live-dot"></span>
+ <span class="mono text-sm font-semibold text-emerald-400" id="timer">00<span class="colon-blink">:</span>00</span>
+ <span class="text-xs text-gray-500">LIVE</span>
+ </div>
+
+ <!-- Overall mood pill -->
+ <div class="glass rounded-xl px-4 py-2 flex items-center gap-2">
+ <span class="text-xs text-gray-500">Room Mood</span>
+ <span id="room-mood-chip" class="emotion-chip bg-emerald-500/15 border border-emerald-500/25 text-emerald-300">
+ <span id="room-mood-emoji">😊</span>
+ <span id="room-mood-label">Engaged</span>
+ </span>
+ </div>
+ </div>
+ </div>
+ </header>
+
+ <!-- ════════════════════ MAIN ════════════════════ -->
+ <main class="max-w-7xl mx-auto px-6 py-6 space-y-6 relative z-10">
+
+ <!-- ── Top stat bar ── -->
+ <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+ <div class="glass glass-hover rounded-2xl p-4 fade-up" style="animation-delay:0.05s">
+ <p class="text-xs text-gray-500 mb-1">Avg Engagement</p>
+ <p class="text-2xl font-black grad-indigo" id="stat-avg">78%</p>
+ <p class="text-xs text-gray-600 mt-1">↑ class average</p>
+ </div>
+ <div class="glass glass-hover rounded-2xl p-4 fade-up" style="animation-delay:0.1s">
+ <p class="text-xs text-gray-500 mb-1">Students Online</p>
+ <p class="text-2xl font-black text-white">3 <span class="text-sm text-gray-500 font-normal">/ 3</span></p>
+ <p class="text-xs text-gray-600 mt-1">All present</p>
+ </div>
+ <div class="glass glass-hover rounded-2xl p-4 fade-up" style="animation-delay:0.15s">
+ <p class="text-xs text-gray-500 mb-1">AI Alerts</p>
+ <p class="text-2xl font-black" id="stat-alerts">0</p>
+ <p class="text-xs text-gray-600 mt-1" id="stat-alerts-sub">No action needed</p>
+ </div>
+ <div class="glass glass-hover rounded-2xl p-4 fade-up" style="animation-delay:0.2s">
+ <p class="text-xs text-gray-500 mb-1">Questions Asked</p>
+ <p class="text-2xl font-black text-white" id="stat-questions">0</p>
+ <p class="text-xs text-gray-600 mt-1">This session</p>
+ </div>
+ </div>
+
+ <!-- ── Student Cards + AI Panel ── -->
+ <div class="grid xl:grid-cols-3 gap-6">
+
+ <!-- ════ STUDENT CARDS (left 2 cols) ════ -->
+ <div class="xl:col-span-2 space-y-4">
+ <div class="flex items-center justify-between mb-1">
+ <p class="text-xs text-gray-500 mono tracking-widest">// STUDENT MONITOR</p>
+ <button onclick="triggerAIScan()" id="scan-btn"
+ class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25 transition-all">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+ d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+ </svg>
+ AI Scan
+ </button>
+ </div>
+
+ <!-- Student Card 1 — Aisha -->
+ <div id="card-0" class="glass glass-hover rounded-2xl p-5 fade-up" style="animation-delay:0.25s">
+ <div class="flex items-start gap-4">
+ <!-- Avatar -->
+ <div class="relative flex-shrink-0">
+ <div id="avatar-0" class="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-xl font-black shadow-lg">
+ A
+ </div>
+ <span id="attn-dot-0" class="attn-dot absolute -bottom-1 -right-1 border-2 border-[#0b0f1a] bg-emerald-400"></span>
+ </div>
+
+ <!-- Name + emotion -->
+ <div class="flex-1 min-w-0">
+ <div class="flex items-center gap-2 flex-wrap mb-1">
+ <p class="font-bold text-white text-base">Aisha R.</p>
+ <span id="emotion-0" class="emotion-chip bg-emerald-500/15 border border-emerald-500/25 text-emerald-300">😊 Focused</span>
+ <span id="status-tag-0" class="tag bg-emerald-500/10 text-emerald-400">Active</span>
+ </div>
+
+ <!-- Stats row -->
+ <div class="grid grid-cols-3 gap-3 mt-3">
+ <!-- Engagement ring -->
+ <div class="flex flex-col items-center gap-1">
+ <div class="ring-wrap">
+ <canvas id="ring-0" width="80" height="80"></canvas>
+ <div class="ring-val">
+ <span id="ring-val-0" class="text-white text-sm font-black">82%</span>
+ <span class="text-gray-600 text-[9px]">engage</span>
+ </div>
+ </div>
+ </div>
+
+ <!-- Metrics -->
+ <div class="col-span-2 space-y-2 mt-1">
+ <div>
+ <div class="flex justify-between text-xs mb-1">
+ <span class="text-gray-500">Attention</span>
+ <span class="mono text-xs" id="attn-val-0" style="color:#34d399">High</span>
+ </div>
+ <div class="pbar"><div id="attn-bar-0" class="pfill" style="width:85%;background:linear-gradient(90deg,#34d399,#22c55e)"></div></div>
+ </div>
+ <div>
+ <div class="flex justify-between text-xs mb-1">
+ <span class="text-gray-500">Participation</span>
+ <span class="mono text-xs text-indigo-400" id="part-val-0">Good</span>
+ </div>
+ <div class="pbar"><div id="part-bar-0" class="pfill" style="width:70%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+ </div>
+ <div>
+ <div class="flex justify-between text-xs mb-1">
+ <span class="text-gray-500">Comprehension</span>
+ <span class="mono text-xs text-sky-400" id="comp-val-0">76%</span>
+ </div>
+ <div class="pbar"><div id="comp-bar-0" class="pfill" style="width:76%;background:linear-gradient(90deg,#38bdf8,#6366f1)"></div></div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Cam + audio viz -->
+ <div class="hidden sm:flex flex-col gap-2 flex-shrink-0 w-28">
+ <div class="cam-area flex items-center justify-center">
+ <div class="text-center">
+ <div id="cam-emoji-0" class="text-3xl">🧑🏽‍💻</div>
+ <p class="text-xs text-gray-600 mt-1">Camera on</p>
+ </div>
+ </div>
+ <!-- Audio bars -->
+ <div class="flex items-end justify-center gap-0.5 h-5" id="audio-0">
+ <div class="wave-bar h-3" style="animation-duration:0.7s;animation-delay:0s"></div>
+ <div class="wave-bar h-5" style="animation-duration:0.5s;animation-delay:0.1s"></div>
+ <div class="wave-bar h-2" style="animation-duration:0.9s;animation-delay:0.2s"></div>
+ <div class="wave-bar h-4" style="animation-duration:0.6s;animation-delay:0.05s"></div>
+ <div class="wave-bar h-5" style="animation-duration:0.4s;animation-delay:0.15s"></div>
+ <div class="wave-bar h-3" style="animation-duration:0.8s;animation-delay:0.25s"></div>
+ </div>
+ </div>
+ </div>
+
+ <!-- AI note -->
+ <div id="ai-note-0" class="mt-4 px-3 py-2 rounded-xl bg-indigo-500/8 border border-indigo-500/15 flex items-start gap-2">
+ <span class="text-indigo-400 mt-0.5 text-xs">✦</span>
+ <p class="text-xs text-gray-400" id="ai-note-text-0">Aisha is highly engaged. She's nodding along and her camera shows forward posture — great focus signal.</p>
+ </div>
+ </div>
+
+ <!-- Student Card 2 — Marcus -->
+ <div id="card-1" class="glass glass-hover rounded-2xl p-5 fade-up" style="animation-delay:0.33s">
+ <div class="flex items-start gap-4">
+ <div class="relative flex-shrink-0">
+ <div id="avatar-1" class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-xl font-black shadow-lg">
+ M
+ </div>
+ <span id="attn-dot-1" class="attn-dot absolute -bottom-1 -right-1 border-2 border-[#0b0f1a] bg-amber-400"></span>
+ </div>
+
+ <div class="flex-1 min-w-0">
+ <div class="flex items-center gap-2 flex-wrap mb-1">
+ <p class="font-bold text-white text-base">Marcus T.</p>
+ <span id="emotion-1" class="emotion-chip bg-amber-500/15 border border-amber-500/25 text-amber-300">🤔 Confused</span>
+ <span id="status-tag-1" class="tag bg-amber-500/10 text-amber-400">Needs Help</span>
+ </div>
+
+ <div class="grid grid-cols-3 gap-3 mt-3">
+ <div class="flex flex-col items-center gap-1">
+ <div class="ring-wrap">
+ <canvas id="ring-1" width="80" height="80"></canvas>
+ <div class="ring-val">
+ <span id="ring-val-1" class="text-white text-sm font-black">52%</span>
+ <span class="text-gray-600 text-[9px]">engage</span>
+ </div>
+ </div>
+ </div>
+
+ <div class="col-span-2 space-y-2 mt-1">
+ <div>
+ <div class="flex justify-between text-xs mb-1">
+ <span class="text-gray-500">Attention</span>
+ <span class="mono text-xs" id="attn-val-1" style="color:#fbbf24">Medium</span>
+ </div>
+ <div class="pbar"><div id="attn-bar-1" class="pfill" style="width:50%;background:linear-gradient(90deg,#fbbf24,#f97316)"></div></div>
+ </div>
+ <div>
+ <div class="flex justify-between text-xs mb-1">
+ <span class="text-gray-500">Participation</span>
+ <span class="mono text-xs text-indigo-400" id="part-val-1">Low</span>
+ </div>
+ <div class="pbar"><div id="part-bar-1" class="pfill" style="width:30%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+ </div>
+ <div>
+ <div class="flex justify-between text-xs mb-1">
+ <span class="text-gray-500">Comprehension</span>
+ <span class="mono text-xs text-sky-400" id="comp-val-1">45%</span>
+ </div>
+ <div class="pbar"><div id="comp-bar-1" class="pfill" style="width:45%;background:linear-gradient(90deg,#fbbf24,#f97316)"></div></div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="hidden sm:flex flex-col gap-2 flex-shrink-0 w-28">
+ <div class="cam-area flex items-center justify-center">
+ <div class="text-center">
+ <div id="cam-emoji-1" class="text-3xl">🧑🏾‍💻</div>
+ <p class="text-xs text-gray-600 mt-1">Camera on</p>
+ </div>
+ </div>
+ <!-- Quieter audio bars -->
+ <div class="flex items-end justify-center gap-0.5 h-5" id="audio-1">
+ <div class="wave-bar h-1" style="animation-duration:1.4s;animation-delay:0s;background:rgba(251,191,36,0.5)"></div>
+ <div class="wave-bar h-2" style="animation-duration:1.1s;animation-delay:0.1s;background:rgba(251,191,36,0.5)"></div>
+ <div class="wave-bar h-1" style="animation-duration:1.6s;animation-delay:0.2s;background:rgba(251,191,36,0.5)"></div>
+ <div class="wave-bar h-1" style="animation-duration:1.2s;animation-delay:0.05s;background:rgba(251,191,36,0.5)"></div>
+ <div class="wave-bar h-2" style="animation-duration:1.5s;animation-delay:0.15s;background:rgba(251,191,36,0.5)"></div>
+ <div class="wave-bar h-1" style="animation-duration:1.3s;animation-delay:0.25s;background:rgba(251,191,36,0.5)"></div>
+ </div>
+ </div>
+ </div>
+
+ <div id="ai-note-1" class="mt-4 px-3 py-2 rounded-xl bg-amber-500/8 border border-amber-500/20 flex items-start gap-2">
+ <span class="text-amber-400 mt-0.5 text-xs">⚠</span>
+ <p class="text-xs text-gray-400" id="ai-note-text-1">Marcus appears confused — low participation, head tilted. Consider pausing to check in with a direct question or a quick recap.</p>
+ </div>
+ </div>
+
+ <!-- Student Card 3 — Priya -->
+ <div id="card-2" class="glass glass-hover rounded-2xl p-5 fade-up" style="animation-delay:0.41s">
+ <div class="flex items-start gap-4">
+ <div class="relative flex-shrink-0">
+ <div id="avatar-2" class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xl font-black shadow-lg">
+ P
+ </div>
+ <span id="attn-dot-2" class="attn-dot absolute -bottom-1 -right-1 border-2 border-[#0b0f1a] bg-emerald-400"></span>
+ </div>
+
+ <div class="flex-1 min-w-0">
+ <div class="flex items-center gap-2 flex-wrap mb-1">
+ <p class="font-bold text-white text-base">Priya S.</p>
+ <span id="emotion-2" class="emotion-chip bg-emerald-500/15 border border-emerald-500/25 text-emerald-300">🌟 Excited</span>
+ <span id="status-tag-2" class="tag bg-emerald-500/10 text-emerald-400">Active</span>
+ </div>
+
+ <div class="grid grid-cols-3 gap-3 mt-3">
+ <div class="flex flex-col items-center gap-1">
+ <div class="ring-wrap">
+ <canvas id="ring-2" width="80" height="80"></canvas>
+ <div class="ring-val">
+ <span id="ring-val-2" class="text-white text-sm font-black">91%</span>
+ <span class="text-gray-600 text-[9px]">engage</span>
+ </div>
+ </div>
+ </div>
+
+ <div class="col-span-2 space-y-2 mt-1">
+ <div>
+ <div class="flex justify-between text-xs mb-1">
+ <span class="text-gray-500">Attention</span>
+ <span class="mono text-xs" id="attn-val-2" style="color:#34d399">Very High</span>
+ </div>
+ <div class="pbar"><div id="attn-bar-2" class="pfill" style="width:93%;background:linear-gradient(90deg,#34d399,#22c55e)"></div></div>
+ </div>
+ <div>
+ <div class="flex justify-between text-xs mb-1">
+ <span class="text-gray-500">Participation</span>
+ <span class="mono text-xs text-indigo-400" id="part-val-2">Excellent</span>
+ </div>
+ <div class="pbar"><div id="part-bar-2" class="pfill" style="width:95%;background:linear-gradient(90deg,#818cf8,#c084fc)"></div></div>
+ </div>
+ <div>
+ <div class="flex justify-between text-xs mb-1">
+ <span class="text-gray-500">Comprehension</span>
+ <span class="mono text-xs text-sky-400" id="comp-val-2">94%</span>
+ </div>
+ <div class="pbar"><div id="comp-bar-2" class="pfill" style="width:94%;background:linear-gradient(90deg,#38bdf8,#6366f1)"></div></div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="hidden sm:flex flex-col gap-2 flex-shrink-0 w-28">
+ <div class="cam-area flex items-center justify-center">
+ <div class="text-center">
+ <div id="cam-emoji-2" class="text-3xl">👩🏽‍💻</div>
+ <p class="text-xs text-gray-600 mt-1">Camera on</p>
+ </div>
+ </div>
+ <!-- Active audio bars -->
+ <div class="flex items-end justify-center gap-0.5 h-5" id="audio-2">
+ <div class="wave-bar h-4" style="animation-duration:0.45s;animation-delay:0s;background:rgba(129,140,248,0.7)"></div>
+ <div class="wave-bar h-5" style="animation-duration:0.35s;animation-delay:0.08s;background:rgba(129,140,248,0.7)"></div>
+ <div class="wave-bar h-3" style="animation-duration:0.55s;animation-delay:0.16s;background:rgba(129,140,248,0.7)"></div>
+ <div class="wave-bar h-5" style="animation-duration:0.42s;animation-delay:0.04s;background:rgba(129,140,248,0.7)"></div>
+ <div class="wave-bar h-4" style="animation-duration:0.38s;animation-delay:0.12s;background:rgba(129,140,248,0.7)"></div>
+ <div class="wave-bar h-5" style="animation-duration:0.48s;animation-delay:0.20s;background:rgba(129,140,248,0.7)"></div>
+ </div>
+ </div>
+ </div>
+
+ <div id="ai-note-2" class="mt-4 px-3 py-2 rounded-xl bg-indigo-500/8 border border-indigo-500/15 flex items-start gap-2">
+ <span class="text-indigo-400 mt-0.5 text-xs">✦</span>
+ <p class="text-xs text-gray-400" id="ai-note-text-2">Priya is highly engaged and visibly excited. She may be ready for a harder challenge — consider asking her to lead a quick explanation.</p>
+ </div>
+ </div>
+
+ </div><!-- end student col -->
+
+ <!-- ════ AI PANEL ════ -->
+ <div class="space-y-4 fade-up" style="animation-delay:0.5s">
+
+ <!-- AI Read the Room -->
+ <div class="glass rounded-2xl p-5 h-fit">
+ <div class="flex items-center gap-3 mb-4">
+ <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 ai-pulse">
+ <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+ d="M13 10V3L4 14h7v7l9-11h-7z"/>
+ </svg>
+ </div>
+ <div>
+ <p class="font-bold text-white text-sm">AI Read the Room</p>
+ <p class="text-gray-500 text-xs">Real-time class analysis</p>
+ </div>
+ </div>
+
+ <!-- Room score gauge -->
+ <div class="relative mb-4">
+ <canvas id="gaugeChart" height="130"></canvas>
+ <div class="absolute inset-x-0 bottom-4 text-center">
+ <p class="text-2xl font-black grad-indigo" id="gauge-val">74%</p>
+ <p class="text-xs text-gray-500">Class Engagement</p>
+ </div>
+ </div>
+
+ <!-- Breakdown mini bars -->
+ <div class="space-y-2 mb-4">
+ <div class="flex items-center justify-between text-xs">
+ <span class="text-gray-500">😊 Engaged</span>
+ <div class="flex items-center gap-2">
+ <div class="w-20 pbar"><div class="pfill bg-emerald-400" id="mood-engaged" style="width:67%"></div></div>
+ <span class="mono text-emerald-400 w-6 text-right" id="mood-engaged-lbl">67%</span>
+ </div>
+ </div>
+ <div class="flex items-center justify-between text-xs">
+ <span class="text-gray-500">🤔 Confused</span>
+ <div class="flex items-center gap-2">
+ <div class="w-20 pbar"><div class="pfill bg-amber-400" id="mood-confused" style="width:33%"></div></div>
+ <span class="mono text-amber-400 w-6 text-right" id="mood-confused-lbl">33%</span>
+ </div>
+ </div>
+ <div class="flex items-center justify-between text-xs">
+ <span class="text-gray-500">😴 Disengaged</span>
+ <div class="flex items-center gap-2">
+ <div class="w-20 pbar"><div class="pfill bg-red-400" id="mood-disengaged" style="width:0%"></div></div>
+ <span class="mono text-red-400 w-6 text-right" id="mood-disengaged-lbl">0%</span>
+ </div>
+ </div>
+ </div>
+
+ <!-- AI Suggestion -->
+ <div id="ai-main-suggestion" class="px-3 py-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-gray-300 leading-relaxed">
+ <p class="text-indigo-300 font-semibold text-xs mb-1">✦ AI Suggestion</p>
+ <p id="main-suggestion-text">One student (Marcus) appears confused. Consider a 2-minute recap of the last concept before moving forward.</p>
+ </div>
+ </div>
+
+ <!-- Engagement trend chart -->
+ <div class="glass rounded-2xl p-5">
+ <p class="font-semibold text-white text-sm mb-1">Engagement Trend</p>
+ <p class="text-xs text-gray-500 mb-3">Last 60 seconds</p>
+ <div style="height:130px;">
+ <canvas id="trendChart"></canvas>
+ </div>
+ </div>
+
+ <!-- AI Insight Feed -->
+ <div class="glass rounded-2xl p-5">
+ <div class="flex items-center justify-between mb-3">
+ <p class="font-semibold text-white text-sm">AI Insights Feed</p>
+ <span class="live-dot"></span>
+ </div>
+ <div id="insight-feed" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+ <!-- Populated by JS -->
+ </div>
+ </div>
+
+ <!-- Teacher Actions -->
+ <div class="glass rounded-2xl p-5">
+ <p class="font-semibold text-white text-sm mb-3">Quick Actions</p>
+ <div class="space-y-2">
+ <button onclick="doAction('poll')" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-sm font-medium text-indigo-300 hover:bg-indigo-500/20 transition-all text-left">
+ <span>📊</span> Launch Quick Poll
+ </button>
+ <button onclick="doAction('break')" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm font-medium text-amber-300 hover:bg-amber-500/20 transition-all text-left">
+ <span>☕</span> Call 2-min Break
+ </button>
+ <button onclick="doAction('recap')" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm font-medium text-emerald-300 hover:bg-emerald-500/20 transition-all text-left">
+ <span>🔄</span> Send Recap Note
+ </button>
+ <button onclick="doAction('challenge')" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-sm font-medium text-purple-300 hover:bg-purple-500/20 transition-all text-left">
+ <span>🚀</span> Give Bonus Challenge
+ </button>
+ </div>
+ </div>
+
+ </div><!-- end AI panel col -->
+ </div><!-- end grid -->
+
+ </main>
+
+ <!-- Toast notification -->
+ <div id="toast" class="fixed bottom-6 right-6 z-50 max-w-xs transition-all duration-500 opacity-0 translate-y-4 pointer-events-none">
+ <div class="glass rounded-2xl px-5 py-4 border border-indigo-500/30 flex items-center gap-3 shadow-2xl">
+ <span id="toast-icon" class="text-xl">✦</span>
+ <p class="text-sm text-gray-200" id="toast-msg">Action triggered.</p>
+ </div>
+ </div>
+
+ <script>
+ // ─────────────────────────────────────────────
+ // DATA MODEL
+ // ─────────────────────────────────────────────
+ const students = [
+ {
+ name: 'Aisha',
+ engagement: 82, attention: 85, participation: 70, comprehension: 76,
+ emotion: 'focused', attnLevel: 'High', partLevel: 'Good',
+ emotionEmoji: '😊', emotionLabel: 'Focused',
+ emotionClass: 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300',
+ dotColor: '#22c55e', dotClass: 'bg-emerald-400',
+ statusTag: 'Active', statusClass: 'bg-emerald-500/10 text-emerald-400',
+ noteType: 'normal',
+ noteIcon: '✦', noteIconColor: 'text-indigo-400',
+ noteBg: 'bg-indigo-500/8 border-indigo-500/15',
+ note: 'Aisha is highly engaged. She\'s nodding along and her camera shows forward posture — great focus signal.',
+ camEmoji: '🧑🏽‍💻',
+ },
+ {
+ name: 'Marcus',
+ engagement: 52, attention: 50, participation: 30, comprehension: 45,
+ emotion: 'confused', attnLevel: 'Medium', partLevel: 'Low',
+ emotionEmoji: '🤔', emotionLabel: 'Confused',
+ emotionClass: 'bg-amber-500/15 border-amber-500/25 text-amber-300',
+ dotColor: '#fbbf24', dotClass: 'bg-amber-400',
+ statusTag: 'Needs Help', statusClass: 'bg-amber-500/10 text-amber-400',
+ noteType: 'warning',
+ noteIcon: '⚠', noteIconColor: 'text-amber-400',
+ noteBg: 'bg-amber-500/8 border-amber-500/20',
+ note: 'Marcus appears confused — low participation, head tilted. Consider pausing to check in with a direct question or a quick recap.',
+ camEmoji: '🧑🏾‍💻',
+ },
+ {
+ name: 'Priya',
+ engagement: 91, attention: 93, participation: 95, comprehension: 94,
+ emotion: 'excited', attnLevel: 'Very High', partLevel: 'Excellent',
+ emotionEmoji: '🌟', emotionLabel: 'Excited',
+ emotionClass: 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300',
+ dotColor: '#22c55e', dotClass: 'bg-emerald-400',
+ statusTag: 'Active', statusClass: 'bg-emerald-500/10 text-emerald-400',
+ noteType: 'normal',
+ noteIcon: '✦', noteIconColor: 'text-indigo-400',
+ noteBg: 'bg-indigo-500/8 border-indigo-500/15',
+ note: 'Priya is highly engaged and visibly excited. She may be ready for a harder challenge — consider asking her to lead a quick explanation.',
+ camEmoji: '👩🏽‍💻',
+ },
+ ];
+
+ // ─────────────────────────────────────────────
+ // RING CHARTS
+ // ─────────────────────────────────────────────
+ const rings = [];
+ const ringColors = [
+ ['rgba(129,140,248,0.9)', 'rgba(192,132,252,0.9)', 'rgba(30,30,60,0.5)'],
+ ['rgba(251,191,36,0.9)', 'rgba(249,115,22,0.9)', 'rgba(60,40,10,0.5)'],
+ ['rgba(129,140,248,0.9)', 'rgba(192,132,252,0.9)', 'rgba(30,30,60,0.5)'],
+ ];
+
+ students.forEach((s, i) => {
+ const ctx = document.getElementById(`ring-${i}`).getContext('2d');
+ const chart = new Chart(ctx, {
+ type: 'doughnut',
+ data: {
+ datasets: [{
+ data: [s.engagement, 100 - s.engagement],
+ backgroundColor: [ringColors[i][0], ringColors[i][2]],
+ borderWidth: 0,
+ borderRadius: 6,
+ }]
+ },
+ options: {
+ cutout: '72%',
+ responsive: false,
+ animation: { animateRotate: true, duration: 1000 },
+ plugins: { legend: { display: false }, tooltip: { enabled: false } },
+ }
+ });
+ rings.push(chart);
+ });
+
+ // ─────────────────────────────────────────────
+ // GAUGE CHART (half-doughnut)
+ // ─────────────────────────────────────────────
+ const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
+ const gaugeAmt = 74;
+ const gaugeChart = new Chart(gaugeCtx, {
+ type: 'doughnut',
+ data: {
+ datasets: [{
+ data: [gaugeAmt, 100 - gaugeAmt, 100],
+ backgroundColor: ['rgba(129,140,248,0.9)', 'rgba(255,255,255,0.06)', 'transparent'],
+ borderWidth: 0,
+ borderRadius: [6, 0, 0],
+ }]
+ },
+ options: {
+ circumference: 180,
+ rotation: -90,
+ cutout: '70%',
+ responsive: true,
+ animation: { animateRotate: true, duration: 1200 },
+ plugins: { legend: { display: false }, tooltip: { enabled: false } },
+ }
+ });
+
+ // ─────────────────────────────────────────────
+ // TREND LINE CHART
+ // ─────────────────────────────────────────────
+ const trendLabels = Array.from({length: 12}, (_, i) => `-${(11-i)*5}s`);
+ const trendData = [68, 70, 72, 71, 74, 73, 75, 74, 76, 73, 74, 74];
+
+ const trendCtx = document.getElementById('trendChart').getContext('2d');
+ const trendGrad = trendCtx.createLinearGradient(0, 0, 0, 130);
+ trendGrad.addColorStop(0, 'rgba(129,140,248,0.3)');
+ trendGrad.addColorStop(1, 'rgba(129,140,248,0)');
+
+ const trendChart = new Chart(trendCtx, {
+ type: 'line',
+ data: {
+ labels: trendLabels,
+ datasets: [{
+ data: trendData,
+ borderColor: '#818cf8',
+ backgroundColor: trendGrad,
+ borderWidth: 2,
+ tension: 0.4,
+ fill: true,
+ pointRadius: 0,
+ pointHoverRadius: 4,
+ pointHoverBackgroundColor: '#818cf8',
+ }]
+ },
+ options: {
+ responsive: true, maintainAspectRatio: false,
+ animation: { duration: 400 },
+ plugins: { legend: { display: false }, tooltip: {
+ backgroundColor: 'rgba(10,14,25,0.95)',
+ borderColor: 'rgba(129,140,248,0.3)', borderWidth: 1,
+ padding: 8, titleColor: '#818cf8', bodyColor: '#d1d5db',
+ }},
+ scales: {
+ x: { display: false },
+ y: {
+ display: true, min: 30, max: 100,
+ grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+ ticks: { color: '#4b5563', font: { size: 10 }, callback: v => v + '%' },
+ }
+ }
+ }
+ });
+
+ // ─────────────────────────────────────────────
+ // TIMER
+ // ─────────────────────────────────────────────
+ let seconds = 0;
+ setInterval(() => {
+ seconds++;
+ const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+ const s = String(seconds % 60).padStart(2, '0');
+ document.getElementById('timer').innerHTML =
+ `${m}<span class="colon-blink">:</span>${s}`;
+ }, 1000);
+
+ // ─────────────────────────────────────────────
+ // AI INSIGHT FEED
+ // ─────────────────────────────────────────────
+ const insightPool = [
+ { icon: '⚠', color: 'bg-amber-500/10 border border-amber-500/20', textColor: 'text-amber-300', msg: 'Marcus hasn\'t responded in 3 minutes. Consider a direct question.' },
+ { icon: '✦', color: 'bg-indigo-500/10 border border-indigo-500/15', textColor: 'text-indigo-300', msg: 'Priya\'s engagement spiked — she may have an answer ready. Call on her!' },
+ { icon: '✦', color: 'bg-emerald-500/10 border border-emerald-500/15', textColor: 'text-emerald-300', msg: 'Aisha is holding steady. Good pacing for her learning speed.' },
+ { icon: '💡', color: 'bg-purple-500/10 border border-purple-500/15', textColor: 'text-purple-300', msg: 'Try a visual diagram for the next concept — two students show comprehension dip.' },
+ { icon: '⚠', color: 'bg-red-500/10 border border-red-500/15', textColor: 'text-red-300', msg: 'Class energy dropping slightly — a 90-second energizer could help!' },
+ { icon: '✦', color: 'bg-indigo-500/10 border border-indigo-500/15', textColor: 'text-indigo-300', msg: 'Overall class mood is positive. Good time to introduce the next topic.' },
+ { icon: '💡', color: 'bg-sky-500/10 border border-sky-500/15', textColor: 'text-sky-300', msg: 'Comprehension average is above 70% — pace is well-calibrated.' },
+ { icon: '⚠', color: 'bg-amber-500/10 border border-amber-500/20', textColor: 'text-amber-300', msg: 'Marcus\'s attention dipped again. Check if he needs the concept re-explained.' },
+ ];
+
+ let insightIdx = 0;
+ const feed = document.getElementById('insight-feed');
+
+ function addInsight() {
+ const ins = insightPool[insightIdx % insightPool.length];
+ insightIdx++;
+ const now = new Date();
+ const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+ const el = document.createElement('div');
+ el.className = `insight-item ${ins.color}`;
+ el.innerHTML = `
+ <span class="text-base flex-shrink-0 mt-0.5">${ins.icon}</span>
+ <div>
+ <p class="text-xs text-gray-300 leading-relaxed">${ins.msg}</p>
+ <p class="mono text-[10px] text-gray-600 mt-0.5">${ts}</p>
+ </div>`;
+ feed.prepend(el);
+ // keep max 6 items
+ while (feed.children.length > 6) feed.removeChild(feed.lastChild);
+ }
+
+ // seed two insights on load
+ addInsight(); addInsight();
+
+ // add a new insight every ~10s
+ setInterval(addInsight, 10000);
+
+ // ─────────────────────────────────────────────
+ // LIVE DATA SIMULATION
+ // ─────────────────────────────────────────────
+ const emotionStates = {
+ focused: { emoji: '😊', label: 'Focused', cls: 'bg-emerald-500/15 border-emerald-500/25 text-emerald-300' },
+ confused: { emoji: '🤔', label: 'Confused', cls: 'bg-amber-500/15 border-amber-500/25 text-amber-300' },
+ excited: { emoji: '🌟', label: 'Excited', cls: 'bg-indigo-500/15 border-indigo-500/25 text-indigo-300' },
+ bored: { emoji: '😴', label: 'Bored', cls: 'bg-red-500/15 border-red-500/25 text-red-300' },
+ thinking: { emoji: '🧐', label: 'Thinking', cls: 'bg-sky-500/15 border-sky-500/25 text-sky-300' },
+ };
+
+ function attnInfo(v) {
+ if (v >= 85) return { label: 'Very High', color: '#34d399' };
+ if (v >= 65) return { label: 'High', color: '#34d399' };
+ if (v >= 45) return { label: 'Medium', color: '#fbbf24' };
+ return { label: 'Low', color: '#f87171' };
+ }
+ function partLabel(v) {
+ if (v >= 85) return 'Excellent';
+ if (v >= 60) return 'Good';
+ if (v >= 35) return 'Low';
+ return 'Very Low';
+ }
+ function dotColorFor(v) {
+ if (v >= 65) return '#22c55e';
+ if (v >= 40) return '#fbbf24';
+ return '#f87171';
+ }
+ function statusFor(v) {
+ if (v >= 65) return { tag: 'Active', cls: 'bg-emerald-500/10 text-emerald-400' };
+ if (v >= 40) return { tag: 'Needs Help', cls: 'bg-amber-500/10 text-amber-400' };
+ return { tag: 'Disengaged', cls: 'bg-red-500/10 text-red-400' };
+ }
+ function noteFor(name, v, emotion) {
+ if (emotion === 'confused' || v < 55)
+ return { icon:'⚠', iconCls:'text-amber-400', bg:'bg-amber-500/8 border-amber-500/20',
+ text: `${name} appears confused — low participation. Consider a direct check-in or brief recap.` };
+ if (emotion === 'bored' || v < 40)
+ return { icon:'🚨', iconCls:'text-red-400', bg:'bg-red-500/8 border-red-500/20',
+ text: `${name} seems disengaged. Try calling on them with an easy question to re-engage.` };
+ if (emotion === 'excited' || v >= 85)
+ return { icon:'✦', iconCls:'text-indigo-400', bg:'bg-indigo-500/8 border-indigo-500/15',
+ text: `${name} is very engaged. Consider giving them a stretch challenge or involving them more.` };
+ return { icon:'✦', iconCls:'text-indigo-400', bg:'bg-indigo-500/8 border-indigo-500/15',
+ text: `${name} is engaged and following the lesson at a good pace.` };
+ }
+
+ function nudge(val, min, max, step = 5) {
+ return Math.min(max, Math.max(min, val + (Math.random() < 0.5 ? -1 : 1) * Math.floor(Math.random() * step + 1)));
+ }
+
+ let alertCount = 0;
+ let questionCount = 0;
+
+ function updateStudentUI(i) {
+ const s = students[i];
+
+ // ring chart
+ rings[i].data.datasets[0].data = [s.engagement, 100 - s.engagement];
+ rings[i].update('none');
+ document.getElementById(`ring-val-${i}`).textContent = s.engagement + '%';
+
+ // attention
+ const ai = attnInfo(s.attention);
+ const attnEl = document.getElementById(`attn-val-${i}`);
+ attnEl.textContent = ai.label;
+ attnEl.style.color = ai.color;
+ const attnBar = document.getElementById(`attn-bar-${i}`);
+ attnBar.style.width = s.attention + '%';
+ if (s.attention >= 65)
+ attnBar.style.background = 'linear-gradient(90deg,#34d399,#22c55e)';
+ else if (s.attention >= 45)
+ attnBar.style.background = 'linear-gradient(90deg,#fbbf24,#f97316)';
+ else
+ attnBar.style.background = 'linear-gradient(90deg,#f87171,#e11d48)';
+
+ // participation
+ document.getElementById(`part-val-${i}`).textContent = partLabel(s.participation);
+ document.getElementById(`part-bar-${i}`).style.width = s.participation + '%';
+
+ // comprehension
+ document.getElementById(`comp-val-${i}`).textContent = s.comprehension + '%';
+ const cbar = document.getElementById(`comp-bar-${i}`);
+ cbar.style.width = s.comprehension + '%';
+
+ // emotion chip
+ const em = emotionStates[s.emotion];
+ const emEl = document.getElementById(`emotion-${i}`);
+ emEl.className = `emotion-chip ${em.cls} border`;
+ emEl.innerHTML = `${em.emoji} ${em.label}`;
+
+ // attention dot
+ const dot = document.getElementById(`attn-dot-${i}`);
+ const dc = dotColorFor(s.engagement);
+ dot.style.background = dc;
+
+ // status tag
+ const st = statusFor(s.engagement);
+ const stEl = document.getElementById(`status-tag-${i}`);
+ stEl.className = `tag ${st.cls}`;
+ stEl.textContent = st.tag;
+
+ // AI note
+ const note = noteFor(s.name, s.engagement, s.emotion);
+ document.getElementById(`ai-note-${i}`).className = `mt-4 px-3 py-2 rounded-xl ${note.bg} border flex items-start gap-2`;
+ document.getElementById(`ai-note-text-${i}`).textContent = note.text;
+ const iconEl = document.getElementById(`ai-note-${i}`).querySelector('span');
+ if (iconEl) { iconEl.className = `mt-0.5 text-xs ${note.iconCls}`; iconEl.textContent = note.icon; }
+ }
+
+ function updateGlobalStats() {
+ const avg = Math.round(students.reduce((a,s) => a + s.engagement, 0) / 3);
+ document.getElementById('stat-avg').textContent = avg + '%';
+ document.getElementById('gauge-val').textContent = avg + '%';
+
+ // gauge chart
+ gaugeChart.data.datasets[0].data = [avg, 100 - avg, 100];
+ gaugeChart.update('none');
+
+ // mood breakdowns
+ const confused = students.filter(s => s.emotion === 'confused' || s.emotion === 'bored').length;
+ const disengaged = students.filter(s => s.engagement < 40).length;
+ const engaged = 3 - confused - disengaged;
+ const engPct = Math.round((engaged / 3) * 100);
+ const confPct = Math.round((confused / 3) * 100);
+ const disPct = Math.round((disengaged / 3) * 100);
+
+ document.getElementById('mood-engaged').style.width = engPct + '%';
+ document.getElementById('mood-confused').style.width = confPct + '%';
+ document.getElementById('mood-disengaged').style.width = disPct + '%';
+ document.getElementById('mood-engaged-lbl').textContent = engPct + '%';
+ document.getElementById('mood-confused-lbl').textContent = confPct + '%';
+ document.getElementById('mood-disengaged-lbl').textContent = disPct + '%';
+
+ // alerts
+ alertCount = students.filter(s => s.engagement < 55).length;
+ document.getElementById('stat-alerts').textContent = alertCount;
+ document.getElementById('stat-alerts').className = alertCount > 0 ? 'text-2xl font-black text-amber-400' : 'text-2xl font-black text-white';
+ document.getElementById('stat-alerts-sub').textContent = alertCount > 0 ? `${alertCount} student${alertCount>1?'s':''} need attention` : 'No action needed';
+
+ // room mood chip
+ let moodEmoji = '😊', moodLabel = 'Engaged', moodCls = 'bg-emerald-500/15 border border-emerald-500/25 text-emerald-300';
+ if (disPct > 30) { moodEmoji='😴'; moodLabel='Disengaged'; moodCls='bg-red-500/15 border border-red-500/25 text-red-300'; }
+ else if (confPct > 30) { moodEmoji='🤔'; moodLabel='Mixed'; moodCls='bg-amber-500/15 border border-amber-500/25 text-amber-300'; }
+ document.getElementById('room-mood-chip').className = `emotion-chip ${moodCls}`;
+ document.getElementById('room-mood-emoji').textContent = moodEmoji;
+ document.getElementById('room-mood-label').textContent = moodLabel;
+
+ // main suggestion
+ const suggestions = [
+ confused > 0 ? 'One or more students appear confused. Consider a quick re-explanation or a check-in question before moving on.' : null,
+ avg < 55 ? 'Class engagement is low. Try an interactive activity like a quick poll or group discussion.' : null,
+ disengaged > 0 ? 'A student seems disengaged. Try calling on them or changing the activity format.' : null,
+ avg >= 80 ? 'Great engagement! This is a good moment to introduce the next concept or increase complexity.' : null,
+ avg >= 65 ? 'Good engagement overall. Keep the current pacing — students are following well.' : null,
+ ].filter(Boolean);
+ document.getElementById('main-suggestion-text').textContent = suggestions[0] || 'Class is running well. Continue at your current pace.';
+
+ // trend chart
+ trendData.shift();
+ trendData.push(avg);
+ trendChart.update();
+ }
+
+ function pickEmotion(engagement) {
+ if (engagement >= 85) return Math.random() < 0.6 ? 'excited' : 'focused';
+ if (engagement >= 65) return Math.random() < 0.5 ? 'focused' : 'thinking';
+ if (engagement >= 45) return Math.random() < 0.6 ? 'confused' : 'thinking';
+ return Math.random() < 0.5 ? 'bored' : 'confused';
+ }
+
+ // Live update every 4 seconds
+ setInterval(() => {
+ students.forEach((s, i) => {
+ s.engagement = nudge(s.engagement, 30, 98, 5);
+ s.attention = nudge(s.attention, 25, 98, 6);
+ s.participation = nudge(s.participation, 15, 98, 4);
+ s.comprehension = nudge(s.comprehension, 20, 98, 4);
+ s.emotion = pickEmotion(s.engagement);
+ updateStudentUI(i);
+ });
+ updateGlobalStats();
+ }, 4000);
+
+ // ─────────────────────────────────────────────
+ // AI SCAN BUTTON
+ // ─────────────────────────────────────────────
+ function triggerAIScan() {
+ const btn = document.getElementById('scan-btn');
+ btn.textContent = '⟳ Scanning...';
+ btn.disabled = true;
+ setTimeout(() => {
+ students.forEach((s, i) => {
+ s.engagement = nudge(s.engagement, 30, 98, 8);
+ s.attention = nudge(s.attention, 25, 98, 10);
+ s.participation = nudge(s.participation, 15, 98, 6);
+ s.comprehension = nudge(s.comprehension, 20, 98, 6);
+ s.emotion = pickEmotion(s.engagement);
+ updateStudentUI(i);
+ });
+ updateGlobalStats();
+ addInsight();
+ btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+ d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+ </svg> AI Scan`;
+ btn.disabled = false;
+ showToast('🔍', 'AI scan complete — all students re-analysed.');
+ }, 1800);
+ }
+
+ // ─────────────────────────────────────────────
+ // QUICK ACTIONS
+ // ─────────────────────────────────────────────
+ const actionMsgs = {
+ poll: ['📊', 'Poll launched! Students will see it shortly.'],
+ break: ['☕', '2-minute break called. Resuming soon!'],
+ recap: ['🔄', 'Recap note sent to all students.'],
+ challenge: ['🚀', 'Bonus challenge delivered to top performers!'],
+ };
+
+ function doAction(type) {
+ const [icon, msg] = actionMsgs[type];
+ if (type === 'challenge') questionCount++;
+ document.getElementById('stat-questions').textContent = questionCount;
+ showToast(icon, msg);
+ addInsight();
+ }
+
+ // ─────────────────────────────────────────────
+ // TOAST
+ // ─────────────────────────────────────────────
+ let toastTimer;
+ function showToast(icon, msg) {
+ clearTimeout(toastTimer);
+ const t = document.getElementById('toast');
+ document.getElementById('toast-icon').textContent = icon;
+ document.getElementById('toast-msg').textContent = msg;
+ t.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+ t.classList.add('opacity-100', 'translate-y-0');
+ toastTimer = setTimeout(() => {
+ t.classList.remove('opacity-100', 'translate-y-0');
+ t.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+ }, 3500);
+ }
+
+ // Initial render
+ students.forEach((_, i) => updateStudentUI(i));
+ updateGlobalStats();
+ </script>
+</body>
+</html>
+
+

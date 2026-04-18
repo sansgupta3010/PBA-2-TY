@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8"/>
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+ <title>About — ClassSense AI</title>
+ <meta name="description" content="Learn about ClassSense AI — the mission, the team, and the technology behind real-time classroom engagement monitoring."/>
+ <script src="https://cdn.tailwindcss.com"></script>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+ <style>
+ * { box-sizing: border-box; }
+ body { font-family: 'Inter', sans-serif; background: #07090f; overflow-x: hidden; }
+ .mono { font-family: 'JetBrains Mono', monospace; }
+ ::-webkit-scrollbar { width: 5px; }
+ ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 9999px; }
+
+ .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.07); }
+ .glass-hover { transition: all 0.3s; }
+ .glass-hover:hover { background: rgba(255,255,255,0.07); border-color: rgba(99,102,241,0.3); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,0.35); }
+
+ .grad { background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+ .nav-link { color: #9ca3af; transition: color 0.2s; font-size: 14px; font-weight: 500; }
+ .nav-link:hover { color: #f9fafb; }
+ .nav-link.active { color: #a5b4fc; }
+
+ .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-weight: 700; padding: 12px 28px; border-radius: 12px; transition: all 0.3s; display: inline-block; }
+ .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(99,102,241,0.4); }
+
+ .blob { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; }
+
+ .fade-in { opacity:0; transform:translateY(20px); transition:opacity 0.6s ease, transform 0.6s ease; }
+ .fade-in.show { opacity:1; transform:none; }
+
+ .value-card { border-radius:18px; padding:24px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); transition:all 0.3s; }
+ .value-card:hover { border-color:rgba(99,102,241,0.3); background:rgba(99,102,241,0.04); transform:translateY(-3px); }
+
+ /* Timeline */
+ .timeline-line { width:2px; background:linear-gradient(to bottom,rgba(99,102,241,0.6),rgba(168,85,247,0.2),transparent); }
+
+ /* Team card */
+ .team-card { transition: all 0.3s; }
+ .team-card:hover { transform: translateY(-5px); }
+ .team-card:hover .team-avatar { transform: scale(1.05); }
+ .team-avatar { transition: transform 0.3s; }
+
+ /* Mobile menu */
+ .mobile-menu { transition: all 0.3s ease; max-height:0; overflow:hidden; }
+ .mobile-menu.open { max-height:300px; }
+ </style>
+</head>
+<body class="text-gray-100">
+
+ <!-- ══════════ NAV ══════════ -->
+ <nav class="fixed top-0 inset-x-0 z-50 border-b border-white/5" style="background:rgba(7,9,15,0.85);backdrop-filter:blur(20px);">
+ <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+ <a href="home.html" class="flex items-center gap-3">
+ <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+ <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.674M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+ </svg>
+ </div>
+ <span class="font-black text-white">ClassSense<span class="text-indigo-400"> AI</span></span>
+ </a>
+ <div class="hidden md:flex items-center gap-8">
+ <a href="home.html" class="nav-link">Home</a>
+ <a href="about.html" class="nav-link active">About</a>
+ <a href="teacher.html" class="nav-link">Dashboard</a>
+ </div>
+ <a href="teacher.html" class="hidden md:inline-block btn-primary text-sm py-2.5 px-5">Open Dashboard →</a>
+ <button class="md:hidden p-2 rounded-lg border border-white/10" onclick="document.getElementById('mob-menu').classList.toggle('open')">
+ <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+ </button>
+ </div>
+ <div class="mobile-menu md:hidden border-t border-white/5 px-6" id="mob-menu">
+ <div class="py-4 space-y-3">
+ <a href="home.html" class="block text-gray-400 font-semibold text-sm">Home</a>
+ <a href="about.html" class="block text-indigo-400 font-semibold text-sm">About</a>
+ <a href="teacher.html" class="block text-gray-400 font-semibold text-sm">Dashboard</a>
+ </div>
+ </div>
+ </nav>
+
+ <!-- ══════════ HERO ══════════ -->
+ <section class="pt-32 pb-20 px-6 relative overflow-hidden" style="background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(99,102,241,0.15) 0%,transparent 70%);">
+ <div class="blob w-80 h-80 bg-indigo-600 opacity-10" style="top:-80px;right:-100px;"></div>
+ <div class="max-w-3xl mx-auto text-center relative z-10">
+ <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/8 mb-6 fade-in show">
+ <span class="mono text-xs text-indigo-300 font-semibold tracking-wide">OUR STORY</span>
+ </div>
+ <h1 class="text-4xl md:text-6xl font-black text-white mb-6 fade-in show">
+ Teaching is human.<br/><span class="grad">AI is the co-pilot.</span>
+ </h1>
+ <p class="text-gray-400 text-lg leading-relaxed fade-in show">
+ ClassSense AI was born from a simple frustration: teachers couldn't see their students' faces clearly enough through tiny Zoom thumbnails to know if anyone was lost. We built the system we wished existed.
+ </p>
+ </div>
+ </section>
+
+ <!-- ══════════ MISSION ══════════ -->
+ <section class="py-16 px-6">
+ <div class="max-w-5xl mx-auto">
+ <div class="glass rounded-3xl p-8 md:p-12 relative overflow-hidden fade-in">
+ <div class="blob w-64 h-64 bg-purple-600 opacity-8" style="top:-60px;right:-60px;filter:blur(80px);"></div>
+ <div class="relative z-10 grid md:grid-cols-2 gap-10 items-center">
+ <div>
+ <p class="mono text-indigo-400 text-xs tracking-widest mb-4">// OUR MISSION</p>
+ <h2 class="text-2xl md:text-3xl font-black text-white mb-4">No student should feel invisible in an online class.</h2>
+ <p class="text-gray-400 leading-relaxed text-sm">
+ Online education amplified access — but it also amplified isolation. Students who would have raised their hand in person now suffer silently behind muted mics and off cameras. ClassSense AI gives teachers the superpower to see through the screen.
+ </p>
+ </div>
+ <div class="space-y-4">
+ <div class="flex items-start gap-4">
+ <div class="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+ <span class="text-lg">👁</span>
+ </div>
+ <div>
+ <p class="text-white font-semibold text-sm mb-1">See Every Student</p>
+ <p class="text-gray-500 text-xs">Individual dashboards for everyone, not just the most vocal.</p>
+ </div>
+ </div>
+ <div class="flex items-start gap-4">
+ <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center flex-shrink-0">
+ <span class="text-lg">⚡</span>
+ </div>
+ <div>
+ <p class="text-white font-semibold text-sm mb-1">Act in the Moment</p>
+ <p class="text-gray-500 text-xs">Insights that arrive in time to actually change what you do next.</p>
+ </div>
+ </div>
+ <div class="flex items-start gap-4">
+ <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+ <span class="text-lg">❤️</span>
+ </div>
+ <div>
+ <p class="text-white font-semibold text-sm mb-1">Keep It Human</p>
+ <p class="text-gray-500 text-xs">AI is a tool. You are still the teacher. ClassSense amplifies — never replaces.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </section>
+
+ <!-- ══════════ HOW THE AI WORKS ══════════ -->
+ <section class="py-20 px-6 border-y border-white/5" style="background:rgba(255,255,255,0.015);">
+ <div class="max-w-5xl mx-auto">
+ <div class="text-center mb-14 fade-in">
+ <p class="mono text-indigo-400 text-xs tracking-widest mb-3">// THE TECHNOLOGY</p>
+ <h2 class="text-3xl font-black text-white">How the AI reads the room</h2>
+ </div>
+ <div class="grid md:grid-cols-2 gap-6">
+ <div class="value-card fade-in" style="transition-delay:0.05s">
+ <div class="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center mb-4">
+ <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
+ </svg>
+ </div>
+ <h3 class="text-white font-bold mb-2">Multimodal Signal Analysis</h3>
+ <p class="text-gray-400 text-sm leading-relaxed">ClassSense combines video posture cues, audio participation patterns, chat activity, and response latency into a unified engagement score — updated every 4 seconds.</p>
+ </div>
+ <div class="value-card fade-in" style="transition-delay:0.1s">
+ <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center mb-4">
+ <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+ </svg>
+ </div>
+ <h3 class="text-white font-bold mb-2">Adaptive Emotion Classification</h3>
+ <p class="text-gray-400 text-sm leading-relaxed">A lightweight emotion model classifies each student across 5 states: Focused, Excited, Confused, Thinking, and Bored — calibrated to online learning contexts, not just general emotion datasets.</p>
+ </div>
+ <div class="value-card fade-in" style="transition-delay:0.15s">
+ <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center mb-4">
+ <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+ </svg>
+ </div>
+ <h3 class="text-white font-bold mb-2">Contextual Suggestion Engine</h3>
+ <p class="text-gray-400 text-sm leading-relaxed">Suggestions are generated in natural language based on the combination of class-wide mood, individual signals, and what's happened in the last 5 minutes of the session.</p>
+ </div>
+ <div class="value-card fade-in" style="transition-delay:0.2s">
+ <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/20 flex items-center justify-center mb-4">
+ <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+ </svg>
+ </div>
+ <h3 class="text-white font-bold mb-2">Privacy-First Design</h3>
+ <p class="text-gray-400 text-sm leading-relaxed">All analysis runs locally in the browser. No student video is stored, uploaded, or shared. Everything stays in the session and disappears when the tab is closed.</p>
+ </div>
+ </div>
+ </div>
+ </section>
+
+ <!-- ══════════ TIMELINE ══════════ -->
+ <section class="py-20 px-6">
+ <div class="max-w-3xl mx-auto">
+ <div class="text-center mb-14 fade-in">
+ <p class="mono text-indigo-400 text-xs tracking-widest mb-3">// OUR JOURNEY</p>
+ <h2 class="text-3xl font-black text-white">How we got here</h2>
+ </div>
+ <div class="relative pl-10">
+ <div class="timeline-line absolute left-3 top-0 bottom-0"></div>
+ <div class="space-y-10">
+ <div class="relative fade-in">
+ <div class="absolute -left-10 w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center" style="top:2px;">
+ <div class="w-2 h-2 rounded-full bg-white"></div>
+ </div>
+ <p class="mono text-indigo-400 text-xs mb-1">2023 · The Problem</p>
+ <h3 class="text-white font-bold mb-1">A teacher noticed nobody raised their hand</h3>
+ <p class="text-gray-400 text-sm">During a post-pandemic online class, an educator realised she had no idea which of her 12 students were lost. They all had cameras off.</p>
+ </div>
+ <div class="relative fade-in" style="transition-delay:0.1s">
+ <div class="absolute -left-10 w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center" style="top:2px;">
+ <div class="w-2 h-2 rounded-full bg-white"></div>
+ </div>
+ <p class="mono text-indigo-400 text-xs mb-1">2024 · The Prototype</p>
+ <h3 class="text-white font-bold mb-1">First version built in a weekend hackathon</h3>
+ <p class="text-gray-400 text-sm">A rough prototype that tracked mic activity and facial expressions. Teachers loved it immediately. The insight feed was born.</p>
+ </div>
+ <div class="relative fade-in" style="transition-delay:0.2s">
+ <div class="absolute -left-10 w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center" style="top:2px;">
+ <div class="w-2 h-2 rounded-full bg-white"></div>
+ </div>
+ <p class="mono text-purple-400 text-xs mb-1">2025 · Beta Launch</p>
+ <h3 class="text-white font-bold mb-1">200+ teachers joined the beta program</h3>
+ <p class="text-gray-400 text-sm">Multi-student tracking, emotion classification, and the quick-action toolbar were all shaped by real teacher feedback over 8 months.</p>
+ </div>
+ <div class="relative fade-in" style="transition-delay:0.3s">
+ <div class="absolute -left-10 w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center" style="top:2px;">
+ <div class="w-2 h-2 rounded-full bg-white"></div>
+ </div>
+ <p class="mono text-emerald-400 text-xs mb-1">2026 · Today</p>
+ <h3 class="text-white font-bold mb-1">ClassSense AI — open and free for every teacher</h3>
+ <p class="text-gray-400 text-sm">A fully browser-based, zero-install, privacy-first tool. No account needed. Just open and teach.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </section>
+
+ <!-- ══════════ TEAM ══════════ -->
+ <section class="py-20 px-6 border-t border-white/5" style="background:rgba(255,255,255,0.015);">
+ <div class="max-w-5xl mx-auto">
+ <div class="text-center mb-14 fade-in">
+ <p class="mono text-indigo-400 text-xs tracking-widest mb-3">// THE TEAM</p>
+ <h2 class="text-3xl font-black text-white">Built by teachers <span class="grad">& technologists</span></h2>
+ </div>
+ <div class="grid sm:grid-cols-3 gap-6">
+
+ <!-- Member 1 -->
+ <div class="team-card glass rounded-2xl p-6 text-center fade-in" style="transition-delay:0.05s">
+ <div class="team-avatar w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
+ 👩🏽‍🏫
+ </div>
+ <h3 class="text-white font-bold text-base mb-0.5">Sarthak R.</h3>
+ <p class="text-indigo-400 text-xs mono mb-3">Founder & AI Lead</p>
+ <p class="text-gray-500 text-xs leading-relaxed">Former high school teacher turned AI engineer. Built ClassSense after experiencing the problem first-hand.</p>
+ </div>
+
+ <!-- Member 2 -->
+ <div class="team-card glass rounded-2xl p-6 text-center fade-in" style="transition-delay:0.12s">
+ <div class="team-avatar w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
+ 🧑🏾‍💻
+ </div>
+ <h3 class="text-white font-bold text-base mb-0.5">James K.</h3>
+ <p class="text-sky-400 text-xs mono mb-3">Lead Engineer</p>
+ <p class="text-gray-500 text-xs leading-relaxed">Full-stack developer specialising in browser-based ML inference and real-time data visualisation.</p>
+ </div>
+
+ <!-- Member 3 -->
+ <div class="team-card glass rounded-2xl p-6 text-center fade-in" style="transition-delay:0.2s">
+ <div class="team-avatar w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
+ 👩🏻‍🔬
+ </div>
+ <h3 class="text-white font-bold text-base mb-0.5">Priya M.</h3>
+ <p class="text-rose-400 text-xs mono mb-3">Learning Science Lead</p>
+ <p class="text-gray-500 text-xs leading-relaxed">EdD in educational psychology. Ensures every AI suggestion is grounded in evidence-based pedagogy.</p>
+ </div>
+ </div>
+ </div>
+ </section>
+
+ <!-- ══════════ VALUES ══════════ -->
+ <section class="py-20 px-6">
+ <div class="max-w-5xl mx-auto">
+ <div class="text-center mb-14 fade-in">
+ <p class="mono text-indigo-400 text-xs tracking-widest mb-3">// OUR VALUES</p>
+ <h2 class="text-3xl font-black text-white">What we believe</h2>
+ </div>
+ <div class="grid md:grid-cols-4 gap-4">
+ <div class="value-card text-center fade-in" style="transition-delay:0.05s">
+ <div class="text-3xl mb-3">🔍</div>
+ <h3 class="text-white font-bold text-sm mb-2">Transparency</h3>
+ <p class="text-gray-500 text-xs">Teachers always see exactly what the AI sees and why.</p>
+ </div>
+ <div class="value-card text-center fade-in" style="transition-delay:0.1s">
+ <div class="text-3xl mb-3">🔒</div>
+ <h3 class="text-white font-bold text-sm mb-2">Privacy</h3>
+ <p class="text-gray-500 text-xs">No data leaves the browser. Ever. Full stop.</p>
+ </div>
+ <div class="value-card text-center fade-in" style="transition-delay:0.15s">
+ <div class="text-3xl mb-3">❤️</div>
+ <h3 class="text-white font-bold text-sm mb-2">Empathy</h3>
+ <p class="text-gray-500 text-xs">Built for burned-out teachers juggling too much at once.</p>
+ </div>
+ <div class="value-card text-center fade-in" style="transition-delay:0.2s">
+ <div class="text-3xl mb-3">⚡</div>
+ <h3 class="text-white font-bold text-sm mb-2">Speed</h3>
+ <p class="text-gray-500 text-xs">Insights that arrive in time to be useful. Not next class.</p>
+ </div>
+ </div>
+ </div>
+ </section>
+
+ <!-- ══════════ CTA ══════════ -->
+ <section class="py-16 px-6 mb-8">
+ <div class="max-w-2xl mx-auto text-center glass rounded-3xl p-10 fade-in relative overflow-hidden">
+ <div class="blob w-56 h-56 bg-indigo-600 opacity-10" style="top:-60px;left:-60px;filter:blur(80px);"></div>
+ <div class="relative z-10">
+ <h2 class="text-2xl font-black text-white mb-3">Ready to try it yourself?</h2>
+ <p class="text-gray-400 text-sm mb-6">Open the dashboard and experience AI-powered teaching in real-time.</p>
+ <a href="teacher.html" class="btn-primary">🚀 Open Teacher Dashboard</a>
+ </div>
+ </div>
+ </section>
+
+ <!-- ══════════ FOOTER ══════════ -->
+ <footer class="border-t border-white/5 py-8 px-6">
+ <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+ <div class="flex items-center gap-3">
+ <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+ <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.674M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+ </svg>
+ </div>
+ <span class="text-white font-bold text-sm">ClassSense <span class="text-indigo-400">AI</span></span>
+ </div>
+ <div class="flex items-center gap-6">
+ <a href="home.html" class="text-xs text-gray-500 hover:text-gray-300 transition-colors">Home</a>
+ <a href="about.html" class="text-xs text-gray-500 hover:text-gray-300 transition-colors">About</a>
+ <a href="teacher.html" class="text-xs text-gray-500 hover:text-gray-300 transition-colors">Dashboard</a>
+ </div>
+ <p class="mono text-xs text-gray-700">© 2026 ClassSense AI</p>
+ </div>
+ </footer>
+
+ <script>
+ const io = new IntersectionObserver(entries => {
+ entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
+ }, { threshold: 0.1 });
+ document.querySelectorAll('.fade-in').forEach(el => io.observe(el));
+ </script>
+</body>
+</html>
+
+
