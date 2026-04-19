@@ -5,7 +5,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t pba-site .'
+                sh '/usr/local/bin/docker build -t pba-site .'
             }
         }
 
