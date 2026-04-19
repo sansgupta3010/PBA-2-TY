@@ -12,8 +12,8 @@ pipeline {
         stage('Run Container') {
             steps {
                 sh '''
-                docker rm -f pba-container || true
-                docker run -d -p 8081:80 --name pba-container pba-site
+                /usr/local/bin/docker rm -f pba-container || true
+                /usr/local/bin/docker run -d -p 8081:80 --name pba-container pba-site
                 '''
             }
         }
