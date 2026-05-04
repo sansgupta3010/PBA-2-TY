@@ -18,9 +18,9 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to XAMPP') {
             steps {
-                echo 'Website running at http://localhost:8081'
+                sh 'cp /var/jenkins_home/workspace/PBA-2-TY/*.html /Applications/XAMPP/xamppfiles/htdocs/'
             }
         }
     }
